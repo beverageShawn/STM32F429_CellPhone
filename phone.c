@@ -14,10 +14,10 @@ TickType_t ticks_to_sleep = SLEEP_TICKS, ticks_to_nextchar = NEXT_CHAR_TICKS;
 TickType_t ticks_now, ticks_last, ticks_of_last_char;
 
 // Container Handle
-extern GHandle  MainMenuContainer, KeypadContainer, CallContainer, MsgContainer, CallOutContainer, CallInContainer, ReadMsgContainer;
+extern GHandle  MainMenuContainer, KeypadContainer, CallContainer, MsgContainer, CallOutContainer, CallInContainer, ReadMsgContainer, cameraContainer, photoContainer;
 
 // Button & Label Handle
-extern GHandle	RETURNBtn, PHONEBtn, READSMSBtn, WRITESMSBtn, CallBtn, CancelBtn, OneBtn, TwoBtn, ThreeBtn, FourBtn, FiveBtn, SixBtn, SevenBtn, EightBtn, NineBtn, StarBtn, ZeroBtn, JingBtn, AnswerBtn, DeclineBtn, HangoffBtn, BackspaceBtn, SendBtn, SwapBtn;
+extern GHandle	RETURNBtn, PHONEBtn, READSMSBtn, WRITESMSBtn, CallBtn, CancelBtn, OneBtn, TwoBtn, ThreeBtn, FourBtn, FiveBtn, SixBtn, SevenBtn, EightBtn, NineBtn, StarBtn, ZeroBtn, JingBtn, AnswerBtn, DeclineBtn, HangoffBtn, BackspaceBtn, SendBtn, SwapBtn, cameraBtn, photoBtn, photoToCameraBtn, cameraToPhotoBtn, photoReturnBtn, cameraReturnBtn, phoneCallToMainBtn, writeMessageToMainBtn;
 extern GHandle  NumLabel, MsgLabel[3], TargetLabel, IncomingLabel, OutgoingLabel, ReadMsgLabel[10];
 
 extern uint8_t locking;
@@ -33,13 +33,13 @@ void prvPhoneTask(void *pvParameters)
     TickType_t xLastWakeTime;
 
     /* Initialize task and some utils */
-    SIMCOM_Init();
+    //SIMCOM_Init();//abc
 	gfxInit();
 	gwinAttachMouse(0);
 	createsUI();
 	gwinShow(MainMenuContainer);
     // Create the check incoming task
-    xTaskCreate( prvIncomingTask, "Check incoming", configMINIMAL_STACK_SIZE , NULL, mainCheck_TASK_PRIORITY, NULL);
+    //xTaskCreate( prvIncomingTask, "Check incoming", configMINIMAL_STACK_SIZE , NULL, mainCheck_TASK_PRIORITY, NULL);//abc
     // Create the check button task
     xTaskCreate( prvButtonTask, "Check button", configMINIMAL_STACK_SIZE * 3, NULL, mainButton_TASK_PRIORITY, &LCD_Handle);
     // Initialize the xLastWakeTime variable with current time.
@@ -96,6 +96,12 @@ void prvPhoneTask(void *pvParameters)
             case READ:
 				gwinShow(ReadMsgContainer);
                 break;
+				case CAMERA:
+				gwinShow(cameraContainer);
+                break;
+				case PHOTO:
+				gwinShow(photoContainer);
+                break;
             default:
 				break;
         }
@@ -122,7 +128,7 @@ void prvButtonTask(void *pvParameters)
 	ticks_to_sleep = SLEEP_TICKS;
 	ticks_now = xTaskGetTickCount();
 	ticks_of_last_char = 0;
-
+	
 	while (TRUE) {
 		pe = geventEventWait(&gl, TIME_INFINITE); // wait forever, so if screen not touched, the task will be blocked
 		ticks_now = xTaskGetTickCount();
@@ -133,6 +139,22 @@ void prvButtonTask(void *pvParameters)
 					// change status to DIAL
 					next = DIAL;
 				} else if (((GEventGWinButton*)pe)->button == RETURNBtn) {
+					next = MAIN;
+				} else if (((GEventGWinButton*)pe)->button == photoBtn) {
+					next = PHOTO;
+				} else if (((GEventGWinButton*)pe)->button == cameraBtn) {
+					next = CAMERA;
+				} else if (((GEventGWinButton*)pe)->button == cameraReturnBtn) {
+					next = MAIN; 
+				} else if (((GEventGWinButton*)pe)->button == photoReturnBtn) {
+					next = MAIN; 
+				} else if (((GEventGWinButton*)pe)->button == photoToCameraBtn) {
+					next = CAMERA; 
+				} else if (((GEventGWinButton*)pe)->button == cameraToPhotoBtn) {
+					next = PHOTO; 
+				} else if (((GEventGWinButton*)pe)->button == phoneCallToMainBtn) {
+					next = MAIN;
+				} else if (((GEventGWinButton*)pe)->button == writeMessageToMainBtn) {
 					next = MAIN;
 				} else if (((GEventGWinButton*)pe)->button == WRITESMSBtn) {
 					// change status to READ
@@ -152,7 +174,7 @@ void prvButtonTask(void *pvParameters)
 					//TODO: read sms here
 					linebuffer[0][0] = '\0';
 					lineindex = 0;
-					totalmsg = SIMCOM_ReadSMS(sms);
+					totalmsg = SIMCOM_ReadSMS(sms);//abc
 					if (totalmsg == 0) {
 						gwinSetText(ReadMsgLabel[4], "NO MSG AVAILABLE", TRUE);
 						continue;
@@ -172,23 +194,23 @@ void prvButtonTask(void *pvParameters)
 				} else if (((GEventGWinButton*)pe)->button == CallBtn) {
 					// change status to dial and call out
 					next = DURING;
-					SIMCOM_Dial(labeltext);
-					calling(labeltext);
+					SIMCOM_Dial(labeltext);//abc
+					calling(labeltext);//abc
 				} else if (((GEventGWinButton*)pe)->button == CancelBtn) {
 					// Clear Number Label
 					textindex = 0;
 					labeltext[0] = '\0';
 					changing = 1;
 				} else if (((GEventGWinButton*)pe)->button == AnswerBtn) {
-					SIMCOM_Answer();
+					SIMCOM_Answer();//abc
 					next = DURING;
-					calling("UNKNOWN");
+					calling("UNKNOWN");//abc
 				} else if (((GEventGWinButton*)pe)->button == DeclineBtn) {
-					SIMCOM_HangUp();
+					SIMCOM_HangUp();//abc
 					next = MAIN;
 				} else if (((GEventGWinButton*)pe)->button == SendBtn) {
-					// TODO: send message
-					SIMCOM_SendSMS(numbuffer, msgbuffer);
+					//TODO: send message
+					SIMCOM_SendSMS(numbuffer, msgbuffer);//abc
 					next = MAIN;
 				} else if (((GEventGWinButton*)pe)->button == BackspaceBtn) {
 					if (msgORnum == 0) {
@@ -519,6 +541,7 @@ void prvButtonTask(void *pvParameters)
 			}
 		}
 	}
+	
 }
 
 /* This task is used for checking incoming call.
@@ -532,7 +555,7 @@ void prvIncomingTask(void *pvParameters)
 
     // Initialize the xLastWakeTime variable with current time.
     xLastWakeTime = xTaskGetTickCount();
-
+	//abc
     while(1) {
         vTaskDelayUntil(&xLastWakeTime, INCOMING_TASK_DELAY);
 
@@ -548,5 +571,7 @@ void prvIncomingTask(void *pvParameters)
             next = INCOMING;
 			
         }
+
     }
+	//abc
 }

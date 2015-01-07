@@ -24,7 +24,7 @@
  * 4 : Send SMS
  * 5 : Read SMS
  */
-enum State {MAIN, INCOMING, DURING, DIAL, SEND, READ};
+enum State {MAIN, INCOMING, DURING, DIAL, SEND, READ, CAMERA, PHOTO};
 
 /* Phone main task */
 void prvPhoneTask(void *pvParameters);

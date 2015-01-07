@@ -9,9 +9,18 @@ extern GListener gl;
 // Container Handle
 GHandle  MainMenuContainer, KeypadContainer, CallContainer, MsgContainer, CallOutContainer, CallInContainer, ReadMsgContainer;
 
+// Container Handle : photo, camera
+GHandle cameraContainer, photoContainer;
+// Button: camrea, photo
+GHandle cameraReturnBtn, photoReturnBtn, photoToCameraBtn, cameraToPhotoBtn, takePictureBtn, leftGoBtn, rightGoBtn;
+//
+
+
 // Button & Label Handle
-GHandle	RETURNBtn, PHONEBtn, READSMSBtn, WRITESMSBtn, CallBtn, CancelBtn, OneBtn, TwoBtn, ThreeBtn, FourBtn, FiveBtn, SixBtn, SevenBtn, EightBtn, NineBtn, StarBtn, ZeroBtn, JingBtn, AnswerBtn, DeclineBtn, HangoffBtn, BackspaceBtn, SendBtn, SwapBtn;
+GHandle	RETURNBtn, PHONEBtn, READSMSBtn, WRITESMSBtn, CallBtn, CancelBtn, OneBtn, TwoBtn, ThreeBtn, FourBtn, FiveBtn, SixBtn, SevenBtn, EightBtn, NineBtn, StarBtn, ZeroBtn, JingBtn, AnswerBtn, DeclineBtn, HangoffBtn, BackspaceBtn, SendBtn, SwapBtn, phoneCallToMainBtn, writeMessageToMainBtn;
 GHandle  NumLabel, MsgLabel[3], TargetLabel, IncomingLabel, OutgoingLabel, ReadMsgLabel[10];
+GHandle  cameraBtn, photoBtn;
+
 uint32_t char_in_button(char c, uint32_t btn)
 {
 	uint32_t i;
@@ -26,8 +35,8 @@ uint32_t char_in_button(char c, uint32_t btn)
 
 void createsContainer(void)
 {
-	GWidgetInit wi;
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	GWidgetInit wi; 
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gwinWidgetClearInit(&wi);
 
@@ -50,6 +59,12 @@ void createsContainer(void)
 	wi.text = "Out";
 	CallOutContainer = gwinContainerCreate(0, &wi, 0);
 
+	//wi.text = "See photo";
+	photoContainer = gwinContainerCreate(0, &wi, 0);
+	
+	wi.text = "Use Camera";
+	cameraContainer = gwinContainerCreate(0, &wi, 0);
+	
 	wi.g.width = gdispGetWidth();
 	wi.g.height = gdispGetHeight()/2 - 20;
 	wi.g.x = 0;
@@ -69,10 +84,11 @@ void createsContainer(void)
 void createsKeypad(void)
 {
 	GWidgetInit wi;
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
-	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
+	gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
 	gwinWidgetClearInit(&wi);
-
+	
+	//gwinSetBgColor(&wi, HTML2COLOR(0xFFFF00));
 	wi.g.show = TRUE;
 	wi.g.parent = KeypadContainer;
 	// One button
@@ -196,14 +212,8 @@ void createsWriteMsg(void)
 	wi.g.y += wi.g.height;
 	MsgLabel[2] = gwinLabelCreate(0, &wi);
 
-	// Swap button
-	wi.g.x = gdispGetWidth() - 40;
-	wi.g.y = 23;
-	wi.g.width = 40;
-	wi.g.height = 15;
-	wi.text = "SWAP";
-	SwapBtn = gwinButtonCreate(0, &wi);
-
+	gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
 	// Send button
 	wi.g.width = gdispGetWidth()/2 - 10;
 	wi.g.height = 40;
@@ -216,13 +226,30 @@ void createsWriteMsg(void)
 	wi.g.x += wi.g.width;
 	wi.text = "<---";
 	BackspaceBtn = gwinButtonCreate(0, &wi);
+
+	// return main button
+	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	wi.g.height = 20;
+	wi.g.width = gdispGetWidth()/2/2;	
+	wi.g.x = gdispGetWidth()-wi.g.width;
+	wi.g.y = 0;	
+	wi.text = "Main";
+	writeMessageToMainBtn = gwinButtonCreate(0, &wi);
+
+	// Swap button
+	wi.g.y = 23;
+	wi.g.width = gdispGetWidth()/2/2;
+	wi.g.x = gdispGetWidth()-wi.g.width;
+	wi.g.height = 15;
+	wi.text = "SWAP";
+	SwapBtn = gwinButtonCreate(0, &wi);
 }
 
 void createsMain(void)
 {
 	GWidgetInit wi;
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
-	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
+	gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
 	gwinWidgetClearInit(&wi);
 
 	wi.g.show = TRUE;
@@ -242,12 +269,20 @@ void createsMain(void)
 	wi.g.y += wi.g.height + 3;
 	wi.text = "READ SMS";
 	READSMSBtn = gwinButtonCreate(0, &wi);
+	
+	wi.g.y += wi.g.height + 3;
+	wi.text = "CAMERA";
+	cameraBtn = gwinButtonCreate(0, &wi);
+
+	wi.g.y += wi.g.height + 3;
+	wi.text = "PHOTOS";
+	photoBtn = gwinButtonCreate(0, &wi);
 }
 
 void createsCall(void)
 {
 	GWidgetInit wi;
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gwinWidgetClearInit(&wi);
 
@@ -261,6 +296,7 @@ void createsCall(void)
 	wi.text = "   ";
 	NumLabel = gwinLabelCreate(0, &wi);
 
+	gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
 	// Call button
 	wi.g.width = gdispGetWidth()/2 + 10;
 	wi.g.height = 40;
@@ -271,16 +307,25 @@ void createsCall(void)
 	
 	// Cancel button
 	wi.g.x += wi.g.width;
-	wi.g.width = gdispGetWidth() - wi.g.x - 10;
+	wi.g.width = gdispGetWidth() - wi.g.x - 15;
 	wi.text = "C";
 	CancelBtn = gwinButtonCreate(0, &wi);
+
+	// return main button
+	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	wi.g.height = 20;
+	wi.g.width = gdispGetWidth()/2/2;	
+	wi.g.x = gdispGetWidth()-wi.g.width;
+	wi.g.y = 0;	
+	wi.text = "Main";
+	phoneCallToMainBtn = gwinButtonCreate(0, &wi);
 
 }
 
 void createsIncall(void)
 {
 	GWidgetInit wi;
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gwinWidgetClearInit(&wi);
 
@@ -312,7 +357,7 @@ void createsIncall(void)
 void createsOutcall(void)
 {
 	GWidgetInit wi;
-	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	gwinSetDefaultFont(gdispOpenFont("UI2 Double"));
 	gwinSetDefaultStyle(&WhiteWidgetStyle, FALSE);
 	gwinWidgetClearInit(&wi);
 
@@ -344,11 +389,13 @@ void hideall(void)
 	gwinHide(KeypadContainer);
 	gwinHide(CallOutContainer);
 	gwinHide(ReadMsgContainer);
+	gwinHide(cameraContainer);
+	gwinHide(photoContainer);
 }
 
 void createsUI(void)
 {
-	char *msg = "My Phone";
+	char *msg = " ";
 	GWidgetInit wi;
 	font_t		font1;
 	
@@ -375,6 +422,8 @@ void createsUI(void)
 	createsKeypad();
 	createsIncall();
 	createsOutcall();
+	createsCameraUI();
+	createsPhotoUI();
 }
 
 void calling(char *number)
@@ -396,5 +445,75 @@ void calling(char *number)
 				break;
 		}
 	}
-
 }
+// Container Handle : photo, camera
+//GHandle CameraContainer, PhotoContainer;
+// Button: camrea, photo
+//GHandle cameraReturnBtn, photoReturnBtn, photoToCameraBtn, cameraToPhotoBtn, takePictureBtn, leftGoBtn, rigihtGoBtn;
+void createsCameraUI(void)
+{
+	GWidgetInit wi;
+	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
+	gwinWidgetClearInit(&wi);
+
+	wi.g.show = TRUE;
+	wi.g.parent = cameraContainer;
+	// Main Menu
+	wi.g.x = 0;
+	wi.g.y = 0;
+	wi.g.width = gdispGetWidth()/4;
+	wi.g.height = gdispGetHeight()/16;
+	
+	wi.g.y = 10;
+	wi.g.x = 1;
+	wi.text = "Main";
+	cameraReturnBtn = gwinButtonCreate(0, &wi);
+
+	wi.g.y = 10;
+	wi.g.x = gdispGetWidth()-wi.g.width-1;
+	wi.text = "Photos";
+	cameraToPhotoBtn = gwinButtonCreate(0, &wi);
+
+	wi.g.y = 260;
+	wi.g.x = gdispGetWidth()/2-wi.g.width/2;
+	wi.text = "shot";
+	takePictureBtn = gwinButtonCreate(0, &wi);
+}
+void createsPhotoUI(void)
+{
+	GWidgetInit wi;
+	gwinSetDefaultFont(gdispOpenFont("UI2"));
+	gwinSetDefaultStyle(&BlackWidgetStyle, FALSE);
+	gwinWidgetClearInit(&wi);
+
+	wi.g.show = TRUE;
+	wi.g.parent = photoContainer;
+	// Main Menu
+	wi.g.x = 0;
+	wi.g.y = 0;
+	wi.g.width = gdispGetWidth()/4;
+	wi.g.height = gdispGetHeight()/16;
+	
+	wi.g.y = 10;
+	wi.g.x = 1;
+	wi.text = "Main";
+	photoReturnBtn = gwinButtonCreate(0, &wi);
+
+	wi.g.y = 10;
+	wi.g.x = gdispGetWidth()-wi.g.width-1;
+	wi.text = "Camera";
+	photoToCameraBtn = gwinButtonCreate(0, &wi);
+
+	wi.g.y = 260;
+	wi.g.x = 1;
+	wi.text = "left";
+	leftGoBtn = gwinButtonCreate(0, &wi);
+		
+	wi.g.y = 260;
+	wi.g.x = gdispGetWidth()-wi.g.width-1;
+	wi.text = "right";
+	rightGoBtn = gwinButtonCreate(0, &wi);
+}
+
+

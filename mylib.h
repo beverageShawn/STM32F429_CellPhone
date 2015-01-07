@@ -23,6 +23,9 @@ void createsIncall(void);
 void createsOutcall(void);
 void hideall(void);
 
+void createsCameraUI(void);
+void createsPhotoUI(void);
+
 void calling(char *number);
 
 uint32_t char_in_button(char c, uint32_t btn);
